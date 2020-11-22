@@ -61,6 +61,11 @@ y_mean = rfqr.predict(X)
 y_median = rfqr.predict(X, 50)
 ```
 
+## What changes in this release
+
+Change default predict method to the same as QuantReg package. This version is faster and include parametric estimation.
+
 ## Important links
 -  API Reference: https://scikit-garden.github.io/api/
 -  Examples: https://scikit-garden.github.io/examples/
+-  Modifications source: https://stackoverflow.com/questions/51483951/quantile-random-forests-from-scikit-garden-very-slow-at-making-predictions
