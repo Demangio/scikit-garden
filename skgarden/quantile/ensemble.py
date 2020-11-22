@@ -4,6 +4,8 @@ from numpy import ma
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble.forest import ForestRegressor
+from sklearn.ensemble.base import BaseEnsemble
+
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import check_X_y
@@ -11,6 +13,12 @@ from sklearn.utils import check_X_y
 from .tree import DecisionTreeQuantileRegressor
 from .tree import ExtraTreeQuantileRegressor
 from .utils import weighted_percentile
+
+import scipy.stats as scp
+from scipy.optimize import fsolve
+
+import warnings
+
 
 def generate_sample_indices(random_state, n_samples):
     """
@@ -100,7 +108,11 @@ class BaseForestQuantileRegressor(ForestRegressor):
             self.y_train_leaves_[i, bootstrap_indices] = y_train_leaves[bootstrap_indices]
         return self
 
-    def predict(self, X, quantile=None):
+    
+#########################################################################################################################
+############# original skgarden predict method which is very slow #######################################################
+#########################################################################################################################
+    def original_predict(self, X, quantile=None):
         """
         Predict regression value for X.
 
@@ -141,6 +153,156 @@ class BaseForestQuantileRegressor(ForestRegressor):
                 self.y_train_, quantile, weights, sorter)
         return quantiles
 
+#########################################################################################################################
+#########################################################################################################################
+# adapted from
+# https://stackoverflow.com/questions/51483951/quantile-random-forests-from-scikit-garden-very-slow-at-making-predictions
+#########################################################################################################################
+#########################################################################################################################
+    def predict(self, X_test, quantiles=None, moments=-1, verbose=False, seed=None):
+        """
+        Function to predict quantiles much faster than the default skgarden method
+        This is the same method that the ranger and quantRegForest packages in R use
+        Output is (n_samples, n_quantiles) or (n_samples, ) if a scalar is given as quantiles
+        """
+        if seed is not None:
+            np.random.seed(seed)
+        
+        # if nothing is specified, returns same as sklearn RandomForestRegressor
+        if (quantiles is None) & (moments==0):
+            if verbose:
+                print("Returns RandomForestRegressor result")
+            return super(BaseForestQuantileRegressor, self).predict(X_test)
+        
+        # Begin one-time calculation of random_values. This only depends on model, so could be saved.
+        n_leaves = np.max(self.y_train_leaves_) + 1  # leaves run from 0 to max(leaf_number)
+        random_values = np.zeros((self.n_estimators, n_leaves))
+        for tree in range(self.n_estimators):
+            for leaf in range(n_leaves):
+                train_samples = np.argwhere(self.y_train_leaves_[tree, :] == leaf).reshape(-1)
+                if len(train_samples) == 0:
+                    random_values[tree, leaf] = np.nan
+                else:
+                    train_values = self.y_train_[train_samples]
+                    random_values[tree, leaf] = np.random.choice(train_values)
+        # Optionally, save random_values as a model attribute for reuse later
+
+        # For each sample, get the random leaf values from all the leaves they land in
+        X_leaves = self.apply(X_test)
+        leaf_values = np.zeros((X_test.shape[0], self.n_estimators))
+        for i in range(self.n_estimators):
+            leaf_values[:, i] = random_values[i, X_leaves[:, i]]
+        
+        # RandomForest has the full distribution in memory. You can return moments, quantiles, or everything else
+        mean = np.mean(leaf_values, axis=1)
+        std = np.std(leaf_values, axis=1)
+        skew = scp.skew(leaf_values, axis=1)
+        kurt = scp.kurtosis(leaf_values, axis=1)
+        
+        # returns param "moments" first moments
+        if (moments == 1) & (quantiles is None):
+            # returns mean, exactly the same as RandomForestRegressor
+            if verbose:
+                print("Returns mean")
+            return mean.reshape(-1,1)
+        
+        elif (moments == 2) & (quantiles is None):
+            # returns mean and std
+            if verbose:
+                print("Returns mean, std")
+            return np.concatenate((mean.reshape(-1,1), std.reshape(-1,1)), axis = 1)
+        
+        elif (moments == 3) & (quantiles is None):
+            # returns mean, std, skewness
+            if verbose:
+                print("Returns mean, std, skewness")
+            return np.concatenate((mean.reshape(-1,1), std.reshape(-1,1), skew.reshape(-1,1)), axis = 1)
+
+        elif (moments == 4) & (quantiles is None):
+            # returns mean, std, skewness, kurtosis
+            if verbose:
+                print("Returns mean, std, skewness, kurtosis")
+            return np.concatenate((mean.reshape(-1,1), std.reshape(-1,1), skew.reshape(-1,1), kurt.reshape(-1,1)), axis = 1)
+        
+        # return quantiles given probability distribution
+        # deterministic
+        elif (quantiles is not None) & (moments==1):
+            if verbose:
+                print("Deterministic quantiles")
+            return np.array([mean for i in quantiles]).transpose()
+        # normal fit
+        elif (quantiles is not None) & (moments==2):
+            return scp.norm.ppf(quantiles, loc=mean.reshape(-1,1), scale=std.reshape(-1,1))
+        
+        
+#######################################################################################
+############# A BIT MORE COMPLEX (AND SLOWER): INTEGRATE SKEWNESS IN MOMENTS ##########
+        elif (quantiles is not None) & (moments==3):
+        
+            if verbose:
+                print("Skew normal quantiles")
+        
+            def mean_skewnormal(loc, scale, shape):
+                delta = shape/np.sqrt(1+shape**2)
+                return loc + scale*delta*np.sqrt(2/np.pi)
+
+            def skewness_skewnormal(shape):
+                delta = shape/np.sqrt(1+shape**2)
+                return (4-np.pi)/2 * (delta*np.sqrt(2/np.pi))**3 / (1 - 2*delta**2/np.pi)**(3/2)
+
+            def std_skewnormal(scale, shape):
+                delta = shape/np.sqrt(1+shape**2)
+                return scale * np.sqrt(1 - 2*delta**2/np.pi)
+
+            # from skewnormal parameters (loc, scale, a) to moments (mean, std, skewness)
+            def moments(params):
+                return np.array([mean_skewnormal(params[0], params[1], params[2]),
+                                 std_skewnormal(params[1], params[2]),
+                                 skewness_skewnormal(params[2])])
+
+            # moments inverse fonction: from (mean, std, skewness) to (loc, scale, a)
+            def params(mean, std, skew):
+                parameters = np.zeros((len(mean), 3))
+                warnings.filterwarnings("error", category=RuntimeWarning)
+                for i in range(len(mean)):
+                    skew[i] = min(.99, max(skew[i], -.99))
+                    fct = lambda x: moments(x) - np.array([mean[i], std[i], skew[i]])
+                    ok = False
+                    while not ok:
+                        try:
+                            parameters[i] = fsolve(fct, [np.random.uniform(-1,1), np.random.uniform(0,1), np.random.uniform(-1,1)])
+                            ok = True
+                        except:
+                            ok = False
+                    if verbose:
+                        print(f"found {i+1}/{len(mean)} skewnormal parameters", end="\r")
+                
+                warnings.resetwarnings()
+                return parameters.T
+            
+            loc, scale, a = params(mean, std, skew)
+            if verbose:
+                print("parameters determined for each sample        ")
+                print("construct quantiles with skewnormal percent point function,")
+                print(f"note that function scipy.stats.skewnorm.ppf takes roughly 10ms per sample per quantile, it may take {round(len(quantiles)*len(X_test)*0.01)}s")
+            return scp.skewnorm.ppf(quantiles, loc=loc.reshape(-1,1), scale=scale.reshape(-1,1), a=a.reshape(-1,1))
+#######################################################################################
+
+
+
+        # Non parametric: for each sample, calculate the quantiles of the leaf_values
+        elif (quantiles is not None) & ((moments<0) | (moments>3)):
+            if verbose:
+                print("Non parametric quantiles")
+            return np.quantile(leaf_values, np.array(quantiles), axis=1).transpose()
+        
+        else:
+            warnings.warn("Incorrect parameters, returns None")
+            return None
+
+#########################################################################################################################
+#########################################################################################################################
+#########################################################################################################################
 
 class RandomForestQuantileRegressor(BaseForestQuantileRegressor):
     """
