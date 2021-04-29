@@ -1,10 +1,20 @@
 import numpy as np
 from scipy import sparse
 from sklearn.base import ClassifierMixin
-from sklearn.ensemble.forest import ForestClassifier
-from sklearn.ensemble.forest import ForestRegressor
+try:
+    from sklearn.ensemble.forest import ForestClassifier
+    from sklearn.ensemble.forest import ForestRegressor
+except:
+    # higher versions of sklearn
+    from sklearn.ensemble._forest import ForestClassifier
+    from sklearn.ensemble._forest import ForestRegressor
+    
 from sklearn.exceptions import NotFittedError
-from sklearn.externals.joblib import delayed, Parallel
+try:
+    from sklearn.externals.joblib import delayed, Parallel
+except:
+    from joblib import delayed, Parallel
+    
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_array

@@ -1,6 +1,11 @@
 import numpy as np
 
-from sklearn.tree.tree import BaseDecisionTree
+try:
+    from sklearn.tree.tree import BaseDecisionTree
+except:
+    # moved to sklearn.tree in higher versions
+    from sklearn.tree import BaseDecisionTree
+
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import ExtraTreeRegressor
 from sklearn.utils import check_array

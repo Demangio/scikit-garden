@@ -1,5 +1,7 @@
 # Scikit-Garden
 
+Adapted from https://github.com/scikit-garden/scikit-garden
+
 [![Build
 Status](https://travis-ci.org/scikit-garden/scikit-garden.svg?branch=master)](https://travis-ci.org/scikit-garden/scikit-garden)
 [![Build Status](https://circleci.com/gh/scikit-garden/scikit-garden/tree/master.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/scikit-garden/scikit-garden)
@@ -21,10 +23,10 @@ Scikit-Garden depends on NumPy, SciPy, Scikit-Learn and Cython. So make sure the
 pip3 install setuptools numpy scipy scikit-learn cython
 ```
 
-After that Scikit-Garden can be installed using pip.
+After that my Scikit-Garden fork can be installed using pip.
 
 ```
-pip install scikit-garden
+pip install git+https://git@github.com/Demangio/scikit-garden.git
 ```
 
 ## Available models

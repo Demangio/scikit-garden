@@ -3,8 +3,13 @@ import numpy as np
 from numpy import ma
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble.forest import ForestRegressor
-from sklearn.ensemble.base import BaseEnsemble
+try:
+    from sklearn.ensemble.forest import ForestRegressor
+    from sklearn.ensemble.base import BaseEnsemble
+except:
+    # for higher versions
+    from sklearn.ensemble._forest import ForestRegressor
+    from sklearn.ensemble._base import BaseEnsemble
 
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state

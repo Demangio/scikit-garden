@@ -9,11 +9,11 @@ from setuptools import Extension, find_packages, setup
 
 DISTNAME = 'scikit-garden'
 DESCRIPTION = "A garden of scikit-learn compatible trees"
-URL = 'https://github.com/scikit-garden/scikit-garden'
-MAINTAINER = 'Manoj Kumar'
-MAINTAINER_EMAIL = 'mks542@nyu.edu'
+URL = 'https://github.com/Demangio/scikit-garden'
+MAINTAINER = 'Guillaume'
+MAINTAINER_EMAIL = 'guillaumedemange@free.fr'
 LICENSE = 'new BSD'
-VERSION = '0.1.4'
+VERSION = '0.1.5'
 
 CYTHON_MIN_VERSION = '0.23'
 
