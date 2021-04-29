@@ -25,12 +25,6 @@ from sklearn.datasets import load_boston
 boston = load_boston()
 X, y = boston.data, boston.target
 
-### Use MondrianForests for variance estimation
-from skgarden import MondrianForestRegressor
-mfr = MondrianForestRegressor()
-mfr.fit(X, y)
-y_mean, y_std = mfr.predict(X, return_std=True)
-
 ### Use QuantileForests for quantile estimation
 from skgarden import RandomForestQuantileRegressor
 rfqr = RandomForestQuantileRegressor(random_state=0)

@@ -8,8 +8,6 @@ Status](https://travis-ci.org/scikit-garden/scikit-garden.svg?branch=master)](ht
 
 Scikit-Garden or skgarden (pronounced as skarden) is a garden for Scikit-Learn compatible decision trees and forests.
 
-#### Weights at different depths of a MondrianTree
-<img src="docs/mondrian_tree/plot3.png" height="300" />
 
 #### Ordered prediction intervals on the Boston dataset.
 <img src="docs/quantile/boston.png" height="300" />

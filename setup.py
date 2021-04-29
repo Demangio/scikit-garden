@@ -36,17 +36,6 @@ libraries = []
 if os.name == 'posix':
     libraries.append('m')
 
-extensions = []
-for name in ['_tree', '_splitter', '_criterion', '_utils']:
-    extensions.append(Extension(
-        'skgarden.mondrian.tree.{}'.format(name),
-        sources=['skgarden/mondrian/tree/{}.pyx'.format(name)],
-        include_dirs=[np.get_include()],
-        libraries=libraries,
-        extra_compile_args=['-O3'],
-    ))
-extensions = cythonize(extensions)
-
 
 if __name__ == "__main__":
     setup(name=DISTNAME,
