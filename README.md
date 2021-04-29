@@ -30,14 +30,12 @@ pip install git+https://git@github.com/Demangio/scikit-garden.git
 ## Available models
 
 ### Regressors
-* MondrianForestRegressor
+
 * ExtraTreesRegressor (with `return_std` support)
 * ExtraTreesQuantileRegressor
 * RandomForestRegressor (with `return_std` support)
 * RandomForestQuantileRegressor
 
-### Classifiers
-* MondrianForestClassifier
 
 ## Usage
 
@@ -47,11 +45,6 @@ The estimators in Scikit-Garden are Scikit-Learn compatible and can serve as a d
 from sklearn.datasets import load_boston
 X, y = load_boston()
 
-### Use MondrianForests for variance estimation
-from skgarden import MondrianForestRegressor
-mfr = MondrianForestRegressor()
-mfr.fit(X, y)
-y_mean, y_std = mfr.predict(X, return_std=True)
 
 ### Use QuantileForests for quantile estimation
 from skgarden import RandomForestQuantileRegressor
@@ -63,7 +56,8 @@ y_median = rfqr.predict(X, 50)
 
 ## What changes in this release
 
-Change default predict method to the same as QuantReg package. This version is faster and include parametric estimation.
+Change default predict method to the same as QuantReg package. This version is faster and include parametric estimation.  
+Adaptation of code to higher versions of dependencies.  
 
 ## Important links
 -  API Reference: https://scikit-garden.github.io/api/
