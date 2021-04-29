@@ -13,7 +13,7 @@ URL = 'https://github.com/Demangio/scikit-garden'
 MAINTAINER = 'Guillaume'
 MAINTAINER_EMAIL = 'guillaumedemange@free.fr'
 LICENSE = 'new BSD'
-VERSION = '0.1.6'
+VERSION = '0.1.7'
 
 CYTHON_MIN_VERSION = '0.23'
 

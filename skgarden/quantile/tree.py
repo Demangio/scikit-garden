@@ -178,13 +178,6 @@ class DecisionTreeQuantileRegressor(DecisionTreeRegressor, BaseTreeQuantileRegre
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    presort : bool, optional (default=False)
-        Whether to presort the data to speed up the finding of best splits in
-        fitting. For the default settings of a decision tree on large
-        datasets, setting this to true may slow down the training process.
-        When using either a smaller dataset or a restricted depth, this may
-        speed up the training.
-
     Attributes
     ----------
     feature_importances_ : array of shape = [n_features]
@@ -222,8 +215,7 @@ class DecisionTreeQuantileRegressor(DecisionTreeRegressor, BaseTreeQuantileRegre
                  min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
-                 max_leaf_nodes=None,
-                 presort=False):
+                 max_leaf_nodes=None):
         super(DecisionTreeQuantileRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -233,8 +225,7 @@ class DecisionTreeQuantileRegressor(DecisionTreeRegressor, BaseTreeQuantileRegre
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
-            random_state=random_state,
-            presort=presort)
+            random_state=random_state)
 
 
 class ExtraTreeQuantileRegressor(ExtraTreeRegressor, BaseTreeQuantileRegressor):
