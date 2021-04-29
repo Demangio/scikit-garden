@@ -19,6 +19,8 @@ Scikit-Garden depends on NumPy, SciPy, Scikit-Learn and Cython. So make sure the
 
 ```
 pip3 install setuptools numpy scipy scikit-learn cython
+# or
+pip3 install -r requirements.txt
 ```
 
 After that my Scikit-Garden fork can be installed using pip.
